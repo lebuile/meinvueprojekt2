@@ -16,7 +16,7 @@ export default defineComponent({
     const items = ref([]);
 
     onMounted(() => {
-      const baseUrl = process.env.VUE_APP_BACKEND_BASE_URL;
+      const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL;
       const requestOptions = {
         method: 'GET',
         redirect: 'follow' as RequestRedirect
