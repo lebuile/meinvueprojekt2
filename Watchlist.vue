@@ -11,7 +11,7 @@
 import { defineComponent, ref, onMounted } from 'vue';
 
 export default defineComponent({
-  name: 'Watchlist',
+  name: 'WatchlistView',
   setup() {
     const items = ref([]);
 
