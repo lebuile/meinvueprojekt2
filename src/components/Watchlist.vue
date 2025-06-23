@@ -19,7 +19,8 @@ import WatchlistItem from './WatchlistItem.vue'
 const watchlist = ref([])
 
 onMounted(async () => {
-  const response = await axios.get('http://localhost:8080/watchlist')
+  const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL;
+  const response = await axios.get(baseUrl + '/watchlist')
   watchlist.value = response.data
 })
 </script>
