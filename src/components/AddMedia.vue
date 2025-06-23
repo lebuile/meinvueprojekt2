@@ -6,7 +6,10 @@
     </div>
     <div>
       <label for="genre">Genre:</label>
-      <input type="text" id="genre" v-model="newMedia.genre" required>
+      <select id="genre" v-model="newMedia.genre" required>
+        <option disabled value="">Genre wählen</option>
+        <option v-for="g in genres" :key="g" :value="g">{{ g }}</option>
+      </select>
     </div>
     <div>
       <label for="type">Typ:</label>
@@ -32,6 +35,8 @@ import type { Media } from '../types/media'
 
 const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
 const emit = defineEmits(['media-added'])
+
+const genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
 
 const newMedia = ref<Partial<Media>>({
   title: '',
