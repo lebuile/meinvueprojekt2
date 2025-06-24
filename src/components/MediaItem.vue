@@ -6,6 +6,17 @@
         <span class="genre">{{ media.genre }}</span>
         <span class="type">{{ media.type === 'MOVIE' ? 'Film' : 'Serie' }}</span>
         <span class="status">{{ media.watched ? 'Gesehen' : 'Nicht gesehen' }}</span>
+
+        <!-- NEU: Trailer-Button für ungesehene Medien -->
+        <button
+          v-if="!media.watched"
+          @click="openTrailer"
+          class="trailer-btn"
+          :disabled="loadingTrailer"
+        >
+          <span v-if="loadingTrailer" class="btn-spinner"></span>
+          🎬 Trailer
+        </button>
       </div>
 
       <div class="media-rating">
@@ -45,6 +56,15 @@
         Löschen
       </button>
     </div>
+
+    <!-- NEU: Trailer Modal -->
+    <TrailerModal
+      :show="showTrailerModal"
+      :media-title="media.title"
+      :trailer-url="currentTrailerUrl"
+      :loading="loadingTrailer"
+      @close="closeTrailerModal"
+    />
 
     <!-- Edit Modal -->
     <div v-if="isEditing" class="edit-modal">
@@ -101,6 +121,7 @@
 import { ref, reactive, watch } from 'vue'
 import axios from 'axios'
 import StarRating from './StarRating.vue'
+import TrailerModal from './TrailerModal.vue'  // NEU: Import der TrailerModal-Komponente
 import type { Media } from '../types/media'
 
 const props = defineProps<{
@@ -138,6 +159,11 @@ const formatDate = (dateString: string | null) => {
 const isEditing = ref(false)
 const localRating = ref(props.media.rating)
 const localComment = ref(props.media.comment || '')
+
+// NEU: Trailer-bezogene Refs
+const showTrailerModal = ref(false)
+const loadingTrailer = ref(false)
+const currentTrailerUrl = ref<string | null>(null)
 
 const editForm = reactive({
   title: props.media.title,
@@ -204,6 +230,27 @@ const saveEdit = async () => {
     console.error('Fehler beim Speichern:', error)
   }
 }
+
+// NEU: Trailer-bezogene Methoden
+const openTrailer = async () => {
+  loadingTrailer.value = true
+  showTrailerModal.value = true
+
+  try {
+    const response = await axios.get(`${baseUrl}/watchlist/${props.media.id}/trailer`)
+    currentTrailerUrl.value = response.data.trailerUrl
+  } catch (error) {
+    console.error('Fehler beim Laden des Trailers:', error)
+    currentTrailerUrl.value = null
+  } finally {
+    loadingTrailer.value = false
+  }
+}
+
+const closeTrailerModal = () => {
+  showTrailerModal.value = false
+  currentTrailerUrl.value = null
+}
 </script>
 
 <style scoped>
@@ -248,6 +295,49 @@ const saveEdit = async () => {
   font-size: 0.85rem;
   font-weight: 500;
   border: 1px solid #dee2e6;
+}
+
+/* NEU: Trailer-Button Styles */
+.trailer-btn {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.trailer-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ee5a24, #ff6b6b);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
+.trailer-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .media-rating {

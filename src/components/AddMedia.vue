@@ -44,7 +44,7 @@
         <input
           type="date"
           id="watchedDate"
-          v-model="newMedia.watchedDate"
+          v-model="watchedDate"
           class="form-input"
         >
         <small class="date-hint">Optional: Wann hast du es gesehen?</small>
@@ -84,21 +84,24 @@ const emit = defineEmits(['media-added'])
 
 const genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
 
+// Separates Ref für das Datum (nicht Teil des Media-Interfaces)
+const watchedDate = ref('')
+
+// Media-Objekt ohne watchedDate
 const newMedia = ref<Partial<Media>>({
   title: '',
   genre: '',
   type: 'MOVIE',
   watched: false,
   rating: null,
-  comment: '',
-  watchedDate: ''
+  comment: ''
 })
 
 watch(() => newMedia.value.watched, (isWatched) => {
   if (!isWatched) {
     newMedia.value.rating = null
     newMedia.value.comment = ''
-    newMedia.value.watchedDate = ''
+    watchedDate.value = ''
   }
 })
 
@@ -107,23 +110,24 @@ const addMedia = async () => {
     const mediaToAdd = {
       ...newMedia.value,
       comment: newMedia.value.comment?.trim() || null,
-      ratingDate: newMedia.value.watchedDate ? new Date(newMedia.value.watchedDate).toISOString() : null
+      // Konvertiere watchedDate zu ratingDate falls gesetzt
+      ratingDate: watchedDate.value ? new Date(watchedDate.value).toISOString() : null
     }
-
-    delete mediaToAdd.watchedDate
 
     await axios.post(`${baseUrl}/watchlist`, mediaToAdd)
     emit('media-added')
 
+    // Reset form
     newMedia.value = {
       title: '',
       genre: '',
       type: 'MOVIE',
       watched: false,
       rating: null,
-      comment: '',
-      watchedDate: ''
+      comment: ''
     }
+    watchedDate.value = ''
+
   } catch (error) {
     console.error('Fehler beim Hinzufügen:', error)
   }
