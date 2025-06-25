@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h2>Meine Medienliste</h2>
     <div class="filter-controls">
       <button @click="loadAll" :class="{ active: !hasActiveFilters }">Alle</button>
       <button @click="loadMovies" :class="{ active: isMovieFilter }">Nur Filme</button>
