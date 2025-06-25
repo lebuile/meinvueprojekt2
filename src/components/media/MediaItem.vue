@@ -17,6 +17,15 @@
           <span v-if="loadingTrailer" class="btn-spinner"></span>
           🎬 Trailer
         </button>
+
+        <!-- NEU: Similar-Button -->
+        <button
+          @click="openSimilarMedia"
+          class="similar-btn"
+          title="Empfehlungen basierend auf diesem Medium"
+        >
+          💡 Empfehlungen
+        </button>
       </div>
 
       <div class="media-rating">
@@ -64,6 +73,16 @@
       :trailer-url="currentTrailerUrl"
       :loading="loadingTrailer"
       @close="closeTrailerModal"
+    />
+
+    <!-- NEU: Similar Media Modal -->
+    <SimilarMedia
+      :show="showSimilarModal"
+      :media-id="media.id"
+      :media-title="media.title"
+      :media-type="media.type"
+      @close="closeSimilarModal"
+      @media-added="$emit('updated')"
     />
 
     <!-- Edit Modal -->
@@ -121,8 +140,9 @@
 import { ref, reactive, watch } from 'vue'
 import axios from 'axios'
 import StarRating from './StarRating.vue'
-import TrailerModal from './TrailerModal.vue'  // NEU: Import der TrailerModal-Komponente
-import type { Media } from '../types/media'
+import TrailerModal from './TrailerModal.vue'
+import SimilarMedia from './SimilarMedia.vue' // NEU: Import der SimilarMedia-Komponente
+import type { Media } from '../../types/media.ts'
 
 const props = defineProps<{
   media: Media
@@ -160,10 +180,13 @@ const isEditing = ref(false)
 const localRating = ref(props.media.rating)
 const localComment = ref(props.media.comment || '')
 
-// NEU: Trailer-bezogene Refs
+// Trailer-bezogene Refs
 const showTrailerModal = ref(false)
 const loadingTrailer = ref(false)
 const currentTrailerUrl = ref<string | null>(null)
+
+// NEU: Similar Media Refs
+const showSimilarModal = ref(false)
 
 const editForm = reactive({
   title: props.media.title,
@@ -231,7 +254,7 @@ const saveEdit = async () => {
   }
 }
 
-// NEU: Trailer-bezogene Methoden
+// Trailer-bezogene Methoden
 const openTrailer = async () => {
   loadingTrailer.value = true
   showTrailerModal.value = true
@@ -250,6 +273,15 @@ const openTrailer = async () => {
 const closeTrailerModal = () => {
   showTrailerModal.value = false
   currentTrailerUrl.value = null
+}
+
+// NEU: Similar Media Methoden
+const openSimilarMedia = () => {
+  showSimilarModal.value = true
+}
+
+const closeSimilarModal = () => {
+  showSimilarModal.value = false
 }
 </script>
 
@@ -297,7 +329,7 @@ const closeTrailerModal = () => {
   border: 1px solid #dee2e6;
 }
 
-/* NEU: Trailer-Button Styles */
+/* Trailer-Button Styles */
 .trailer-btn {
   background: linear-gradient(135deg, #ff6b6b, #ee5a24);
   color: white;
@@ -324,6 +356,29 @@ const closeTrailerModal = () => {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
+}
+
+/* NEU: Similar-Button Styles */
+.similar-btn {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+.similar-btn:hover {
+  background: linear-gradient(135deg, #138496, #17a2b8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
 }
 
 .btn-spinner {

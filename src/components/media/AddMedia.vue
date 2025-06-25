@@ -77,7 +77,7 @@
 import { ref, watch } from 'vue'
 import axios from 'axios'
 import StarRating from './StarRating.vue'
-import type { Media } from '../types/media'
+import type { Media } from '../../types/media.ts'
 
 const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
 const emit = defineEmits(['media-added'])

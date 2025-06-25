@@ -80,7 +80,7 @@ import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import MediaItem from './MediaItem.vue'
 import AddMedia from './AddMedia.vue'
-import type { Media } from '../types/media'
+import type { Media } from '../../types/media.ts'
 
 const selectedGenres = ref<string[]>([])
 const currentGenre = ref<string>('')

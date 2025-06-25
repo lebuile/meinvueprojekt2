@@ -5,6 +5,6 @@
   </div>
 </template>
 
-<script setup>
-import MediaWatchlist from './components/MediaWatchlist.vue'
+<script setup lang="ts">
+import MediaWatchlist from './components/media/MediaWatchlist.vue'
 </script>
