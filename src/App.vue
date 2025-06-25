@@ -2,8 +2,10 @@
   <div class="app">
     <div v-if="!showWatchlist" class="landing-page">
       <div class="hero-section">
-        <h1 class="app-title">📺 Meine Sammlung</h1>
-        <p class="app-subtitle">Verwalte deine Filme und Serien an einem Ort</p>
+        <div class="logo-container">
+          <img src="/logo.png" alt="Logo" class="main-logo" />
+          <h1 class="app-title">Meine Watchlist</h1>
+        </div>
 
         <button @click="openWatchlist" class="primary-btn">
           🎬 Meine Watchlist öffnen
@@ -100,11 +102,33 @@ html, body {
   margin: 2rem;
 }
 
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.main-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  background: transparent;
+  border-radius: 50%;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+}
+
+.main-logo:hover {
+  transform: scale(1.05);
+}
+
 .app-title {
-  font-size: 3.5rem;
+  font-size: 2.8rem;
   font-weight: 700;
   color: #2d3748;
-  margin: 0 0 1rem 0;
+  margin: 0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -196,8 +220,13 @@ html, body {
     max-width: none;
   }
 
+  .main-logo {
+    width: 90px;
+    height: 90px;
+  }
+
   .app-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .app-subtitle {
