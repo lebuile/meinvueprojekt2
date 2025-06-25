@@ -77,6 +77,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import { authService } from '../../authService'
 import MediaItem from './MediaItem.vue'
 import AddMedia from './AddMedia.vue'
 import type { Media } from '../../types/media.ts'
@@ -95,6 +96,14 @@ const isRatingFilter = ref(false)
 const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
 const mediaList = ref<Media[]>([])
 const showAddModal = ref(false)
+
+const getUserId = () => {
+  const userId = authService.getUserId()
+  if (!userId) {
+    throw new Error('Nicht angemeldet')
+  }
+  return userId
+}
 
 const hasActiveFilters = computed(() => {
   return selectedGenres.value.length > 0 ||
@@ -118,7 +127,8 @@ const latestRatingDate = ref<string | null>(null)
 
 const loadLatestRatingDate = async () => {
   try {
-    const response = await axios.get(`${baseUrl}/watchlist/latest-rating-date`)
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/latest-rating-date`)
     latestRatingDate.value = response.data.latestRatingDate
   } catch (error) {
     console.error('Fehler beim Laden des letzten Bewertungsdatums:', error)
@@ -200,51 +210,82 @@ const removeGenre = (genre: string) => {
 
 const loadAll = async () => {
   resetFilterStates()
-  const response = await axios.get(`${baseUrl}/watchlist`)
-  mediaList.value = response.data
+  try {
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/all`)
+    mediaList.value = response.data
+  } catch (error) {
+    console.error('Fehler beim Laden:', error)
+  }
 }
 
 const loadMovies = async () => {
   isMovieFilter.value = true
   isSeriesFilter.value = false
-  await loadByGenres()
+  try {
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/movies`)
+    mediaList.value = response.data
+  } catch (error) {
+    console.error('Fehler beim Laden der Filme:', error)
+  }
 }
 
 const loadSeries = async () => {
   isSeriesFilter.value = true
   isMovieFilter.value = false
-  await loadByGenres()
+  try {
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/series`)
+    mediaList.value = response.data
+  } catch (error) {
+    console.error('Fehler beim Laden der Serien:', error)
+  }
 }
 
 const loadWatched = async () => {
   resetFilterStates()
   isWatchedFilter.value = true
-  const response = await axios.get(`${baseUrl}/watchlist/watched`)
-  mediaList.value = response.data
+  try {
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/watched`)
+    mediaList.value = response.data
+  } catch (error) {
+    console.error('Fehler beim Laden der gesehenen Medien:', error)
+  }
 }
 
 const loadUnwatched = async () => {
   resetFilterStates()
   isUnwatchedFilter.value = true
-  const response = await axios.get(`${baseUrl}/watchlist/unwatched`)
-  mediaList.value = response.data
+  try {
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/unwatched`)
+    mediaList.value = response.data
+  } catch (error) {
+    console.error('Fehler beim Laden der ungesehenen Medien:', error)
+  }
 }
 
 const loadRated = async () => {
   resetFilterStates()
   isRatingFilter.value = true
-  const response = await axios.get(`${baseUrl}/watchlist/rated`)
-  mediaList.value = response.data
+  try {
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/rated`)
+    mediaList.value = response.data
+  } catch (error) {
+    console.error('Fehler beim Laden der bewerteten Medien:', error)
+  }
 }
 
 const loadByMinRating = async (rating: number) => {
   resetFilterStates()
   isRatingFilter.value = true
   try {
-    const allRated = await axios.get(`${baseUrl}/watchlist/rated`)
-    mediaList.value = allRated.data.filter((media: Media) =>
-      media.rating && media.rating >= rating
-    ).sort((a: Media, b: Media) => (b.rating || 0) - (a.rating || 0))
+    const userId = getUserId()
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/rating-min/${rating}`)
+    mediaList.value = response.data
   } catch (error) {
     console.error('Fehler beim Laden bewerteter Medien:', error)
   }
@@ -264,18 +305,19 @@ const loadByGenres = async () => {
     }
   }
 
-  const params = new URLSearchParams()
-  selectedGenres.value.forEach(g => params.append('genres', g))
-
-  if (isMovieFilter.value) {
-    params.append('type', 'MOVIE')
-  } else if (isSeriesFilter.value) {
-    params.append('type', 'SERIES')
-  }
-
   try {
-    const response = await axios.get(`${baseUrl}/watchlist/filter?${params.toString()}`)
+    const userId = getUserId()
+    const params = new URLSearchParams()
+    selectedGenres.value.forEach(g => params.append('genres', g))
+
+    const response = await axios.get(`${baseUrl}/watchlist/${userId}/genres?${params.toString()}`)
     let filteredData = response.data
+
+    if (isMovieFilter.value) {
+      filteredData = filteredData.filter((media: Media) => media.type === 'MOVIE')
+    } else if (isSeriesFilter.value) {
+      filteredData = filteredData.filter((media: Media) => media.type === 'SERIES')
+    }
 
     if (isWatchedFilter.value) {
       filteredData = filteredData.filter((media: Media) => media.watched)
@@ -290,8 +332,13 @@ const loadByGenres = async () => {
 }
 
 const deleteMedia = async (id: number) => {
-  await axios.delete(`${baseUrl}/watchlist/${id}`)
-  await refreshList()
+  try {
+    const userId = getUserId()
+    await axios.delete(`${baseUrl}/watchlist/${userId}/delete/${id}`)
+    await refreshList()
+  } catch (error) {
+    console.error('Fehler beim Löschen:', error)
+  }
 }
 
 const refreshList = async () => {

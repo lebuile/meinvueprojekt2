@@ -7,7 +7,6 @@
         <span class="type">{{ media.type === 'MOVIE' ? 'Film' : 'Serie' }}</span>
         <span class="status">{{ media.watched ? 'Gesehen' : 'Nicht gesehen' }}</span>
 
-        <!-- NEU: Trailer-Button für ungesehene Medien -->
         <button
           v-if="!media.watched"
           @click="openTrailer"
@@ -139,9 +138,10 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import axios from 'axios'
+import { authService } from '../../authService'
 import StarRating from './StarRating.vue'
 import TrailerModal from './TrailerModal.vue'
-import SimilarMedia from './SimilarMedia.vue' // NEU: Import der SimilarMedia-Komponente
+import SimilarMedia from './SimilarMedia.vue'
 import type { Media } from '../../types/media.ts'
 
 const props = defineProps<{
@@ -152,6 +152,14 @@ const emit = defineEmits(['delete', 'updated'])
 
 const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
 const genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
+
+const getUserId = () => {
+  const userId = authService.getUserId()
+  if (!userId) {
+    throw new Error('Nicht angemeldet')
+  }
+  return userId
+}
 
 const formatDate = (dateString: string | null) => {
   if (!dateString) return null
@@ -180,12 +188,10 @@ const isEditing = ref(false)
 const localRating = ref(props.media.rating)
 const localComment = ref(props.media.comment || '')
 
-// Trailer-bezogene Refs
 const showTrailerModal = ref(false)
 const loadingTrailer = ref(false)
 const currentTrailerUrl = ref<string | null>(null)
 
-// NEU: Similar Media Refs
 const showSimilarModal = ref(false)
 
 const editForm = reactive({
@@ -204,7 +210,8 @@ watch(() => props.media, (newMedia) => {
 
 const updateRating = async (newRating: number | null) => {
   try {
-    await axios.patch(`${baseUrl}/watchlist/${props.media.id}/rating`, {
+    const userId = getUserId()
+    await axios.patch(`${baseUrl}/watchlist/${userId}/update/${props.media.id}/rating`, {
       rating: newRating,
       comment: localComment.value
     })
@@ -219,7 +226,8 @@ const updateComment = async () => {
   if (localComment.value === props.media.comment) return
 
   try {
-    await axios.patch(`${baseUrl}/watchlist/${props.media.id}/rating`, {
+    const userId = getUserId()
+    await axios.patch(`${baseUrl}/watchlist/${userId}/update/${props.media.id}/rating`, {
       rating: localRating.value,
       comment: localComment.value
     })
@@ -246,7 +254,8 @@ const toggleEdit = () => {
 
 const saveEdit = async () => {
   try {
-    await axios.put(`${baseUrl}/watchlist/${props.media.id}`, editForm)
+    const userId = getUserId()
+    await axios.put(`${baseUrl}/watchlist/${userId}/update/${props.media.id}`, editForm)
     isEditing.value = false
     emit('updated')
   } catch (error) {
@@ -254,7 +263,6 @@ const saveEdit = async () => {
   }
 }
 
-// Trailer-bezogene Methoden
 const openTrailer = async () => {
   loadingTrailer.value = true
   showTrailerModal.value = true
@@ -275,14 +283,10 @@ const closeTrailerModal = () => {
   currentTrailerUrl.value = null
 }
 
-// NEU: Similar Media Methoden
 const openSimilarMedia = () => {
   showSimilarModal.value = true
 }
 
-const closeSimilarModal = () => {
-  showSimilarModal.value = false
-}
 </script>
 
 <style scoped>
@@ -329,7 +333,6 @@ const closeSimilarModal = () => {
   border: 1px solid #dee2e6;
 }
 
-/* Trailer-Button Styles */
 .trailer-btn {
   background: linear-gradient(135deg, #ff6b6b, #ee5a24);
   color: white;
@@ -358,7 +361,6 @@ const closeSimilarModal = () => {
   transform: none;
 }
 
-/* NEU: Similar-Button Styles */
 .similar-btn {
   background: linear-gradient(135deg, #17a2b8, #138496);
   color: white;

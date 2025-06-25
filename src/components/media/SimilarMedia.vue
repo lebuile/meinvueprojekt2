@@ -77,6 +77,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import axios from 'axios'
+import { authService } from '../../authService'
 
 interface SimilarMediaItem {
   tmdbId: number
@@ -134,6 +135,11 @@ const addToWatchlist = async (item: SimilarMediaItem) => {
   addingToWatchlist.value = item.tmdbId
 
   try {
+    const userId = authService.getUserId()
+    if (!userId) {
+      throw new Error('Nicht angemeldet')
+    }
+
     // 1. Genre von TMDB über Backend abrufen
     const genre = await getGenreFromTmdb(item.tmdbId, item.type)
 
@@ -146,7 +152,7 @@ const addToWatchlist = async (item: SimilarMediaItem) => {
       trailerUrl: null
     }
 
-    await axios.post(`${baseUrl}/watchlist`, mediaToAdd)
+    await axios.post(`${baseUrl}/watchlist/${userId}/add`, mediaToAdd)
     emit('mediaAdded')
 
     // Erfolgs-Feedback
@@ -481,4 +487,5 @@ watch(() => props.show, (isShown) => {
   .modal-header h3 {
     font-size: 1.1rem;
   }
-}</style>
+}
+</style>

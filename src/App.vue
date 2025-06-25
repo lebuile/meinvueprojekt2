@@ -1,36 +1,70 @@
 <template>
   <div class="app">
-    <div v-if="!showWatchlist" class="landing-page">
-      <div class="hero-section">
-        <div class="logo-container">
-          <img src="/logo.png" alt="Logo" class="main-logo" />
-          <h1 class="app-title">Meine Watchlist</h1>
+    <AuthComponent
+      v-if="!isLoggedIn"
+      @login-success="handleLoginSuccess"
+    />
+
+    <div v-else>
+      <div v-if="!showWatchlist" class="landing-page">
+        <div class="hero-section">
+          <div class="logo-container">
+            <img src="/logo.png" alt="Logo" class="main-logo" />
+            <h1 class="app-title">Meine Watchlist</h1>
+            <p class="welcome-text">Willkommen, {{ currentUser?.username }}!</p>
+          </div>
+
+          <button @click="openWatchlist" class="primary-btn">
+            🎬 Meine Watchlist öffnen
+          </button>
+        </div>
+      </div>
+
+      <div v-else class="watchlist-view">
+        <div class="header">
+          <button @click="goBack" class="back-btn">
+            ← Zurück
+          </button>
+          <h1 class="page-title">📺 Meine Watchlist</h1>
+          <div class="user-section">
+            <span class="username">{{ currentUser?.username }}</span>
+            <button @click="handleLogout" class="logout-btn">
+              Abmelden
+            </button>
+          </div>
         </div>
 
-        <button @click="openWatchlist" class="primary-btn">
-          🎬 Meine Watchlist öffnen
-        </button>
+        <MediaWatchlist />
       </div>
-    </div>
-
-    <div v-else class="watchlist-view">
-      <div class="header">
-        <button @click="goBack" class="back-btn">
-          ← Zurück
-        </button>
-        <h1 class="page-title">📺 Meine Watchlist</h1>
-      </div>
-
-      <MediaWatchlist />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { authService } from './authService'
+import AuthComponent from './components/authentication/AuthComponent.vue'
 import MediaWatchlist from './components/media/MediaWatchlist.vue'
 
 const showWatchlist = ref(false)
+const isLoggedIn = ref(false)
+
+const currentUser = computed(() => authService.getCurrentUser())
+
+onMounted(() => {
+  // Prüfe Login-Status beim Start
+  isLoggedIn.value = authService.isLoggedIn()
+})
+
+const handleLoginSuccess = () => {
+  isLoggedIn.value = true
+}
+
+const handleLogout = () => {
+  authService.logout()
+  isLoggedIn.value = false
+  showWatchlist.value = false
+}
 
 const openWatchlist = () => {
   showWatchlist.value = true
@@ -132,11 +166,11 @@ html, body {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.app-subtitle {
-  font-size: 1.3rem;
+.welcome-text {
+  font-size: 1.2rem;
   color: #4a5568;
-  margin-bottom: 3rem;
-  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
 }
 
 .primary-btn {
@@ -178,8 +212,7 @@ html, body {
 .header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: space-between;
   margin-bottom: 2rem;
   padding: 1rem;
   background: #2d3748;
@@ -196,8 +229,6 @@ html, body {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
-  position: absolute;
-  left: 1rem;
 }
 
 .back-btn:hover {
@@ -211,6 +242,36 @@ html, body {
   font-size: 1.8rem;
   font-weight: 600;
   text-align: center;
+  flex: 1;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.username {
+  color: #e2e8f0;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.logout-btn {
+  background: linear-gradient(45deg, #e53e3e, #c53030);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(45deg, #c53030, #9c2626);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
@@ -229,8 +290,8 @@ html, body {
     font-size: 2rem;
   }
 
-  .app-subtitle {
-    font-size: 1.1rem;
+  .welcome-text {
+    font-size: 1rem;
   }
 
   .primary-btn {
@@ -240,12 +301,17 @@ html, body {
 
   .header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 1rem;
   }
 
   .page-title {
     font-size: 1.5rem;
+  }
+
+  .user-section {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 

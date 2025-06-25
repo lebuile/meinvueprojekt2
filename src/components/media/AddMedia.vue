@@ -76,6 +76,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import axios from 'axios'
+import { authService } from '../../authService'
 import StarRating from './StarRating.vue'
 import type { Media } from '../../types/media.ts'
 
@@ -84,10 +85,8 @@ const emit = defineEmits(['media-added'])
 
 const genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
 
-// Separates Ref für das Datum (nicht Teil des Media-Interfaces)
 const watchedDate = ref('')
 
-// Media-Objekt ohne watchedDate
 const newMedia = ref<Partial<Media>>({
   title: '',
   genre: '',
@@ -107,17 +106,20 @@ watch(() => newMedia.value.watched, (isWatched) => {
 
 const addMedia = async () => {
   try {
+    const userId = authService.getUserId()
+    if (!userId) {
+      throw new Error('Nicht angemeldet')
+    }
+
     const mediaToAdd = {
       ...newMedia.value,
       comment: newMedia.value.comment?.trim() || null,
-      // Konvertiere watchedDate zu ratingDate falls gesetzt
       ratingDate: watchedDate.value ? new Date(watchedDate.value).toISOString() : null
     }
 
-    await axios.post(`${baseUrl}/watchlist`, mediaToAdd)
+    await axios.post(`${baseUrl}/watchlist/${userId}/add`, mediaToAdd)
     emit('media-added')
 
-    // Reset form
     newMedia.value = {
       title: '',
       genre: '',
