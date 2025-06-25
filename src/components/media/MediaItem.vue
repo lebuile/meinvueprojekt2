@@ -287,6 +287,10 @@ const openSimilarMedia = () => {
   showSimilarModal.value = true
 }
 
+const closeSimilarModal = () => {
+  showSimilarModal.value = false
+}
+
 </script>
 
 <style scoped>
