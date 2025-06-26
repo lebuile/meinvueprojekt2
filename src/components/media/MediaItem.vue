@@ -211,7 +211,8 @@ watch(() => props.media, (newMedia) => {
 const updateRating = async (newRating: number | null) => {
   try {
     const userId = getUserId()
-    await axios.patch(`${baseUrl}/watchlist/${userId}/update/${props.media.id}/rating`, {
+    // KORRIGIERT: /api hinzugefügt
+    await axios.patch(`${baseUrl}/api/watchlist/${userId}/update/${props.media.id}/rating`, {
       rating: newRating,
       comment: localComment.value
     })
@@ -227,7 +228,8 @@ const updateComment = async () => {
 
   try {
     const userId = getUserId()
-    await axios.patch(`${baseUrl}/watchlist/${userId}/update/${props.media.id}/rating`, {
+    // KORRIGIERT: /api hinzugefügt
+    await axios.patch(`${baseUrl}/api/watchlist/${userId}/update/${props.media.id}/rating`, {
       rating: localRating.value,
       comment: localComment.value
     })
@@ -255,7 +257,8 @@ const toggleEdit = () => {
 const saveEdit = async () => {
   try {
     const userId = getUserId()
-    await axios.put(`${baseUrl}/watchlist/${userId}/update/${props.media.id}`, editForm)
+    // KORRIGIERT: /api hinzugefügt
+    await axios.put(`${baseUrl}/api/watchlist/${userId}/update/${props.media.id}`, editForm)
     isEditing.value = false
     emit('updated')
   } catch (error) {
@@ -268,7 +271,8 @@ const openTrailer = async () => {
   showTrailerModal.value = true
 
   try {
-    const response = await axios.get(`${baseUrl}/watchlist/${props.media.id}/trailer`)
+    // KORRIGIERT: /api hinzugefügt
+    const response = await axios.get(`${baseUrl}/api/watchlist/${props.media.id}/trailer`)
     currentTrailerUrl.value = response.data.trailerUrl
   } catch (error) {
     console.error('Fehler beim Laden des Trailers:', error)

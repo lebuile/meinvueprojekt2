@@ -121,7 +121,8 @@ const loadSimilarMedia = async () => {
 
   loading.value = true
   try {
-    const response = await axios.get(`${baseUrl}/watchlist/${props.mediaId}/similar`)
+    // KORRIGIERT: /api hinzugefügt
+    const response = await axios.get(`${baseUrl}/api/watchlist/${props.mediaId}/similar`)
     similarMedia.value = response.data.similarMedia || []
   } catch (error) {
     console.error('Fehler beim Laden der Empfehlungen:', error)
@@ -152,7 +153,8 @@ const addToWatchlist = async (item: SimilarMediaItem) => {
       trailerUrl: null
     }
 
-    await axios.post(`${baseUrl}/watchlist/${userId}/add`, mediaToAdd)
+    // KORRIGIERT: /api hinzugefügt
+    await axios.post(`${baseUrl}/api/watchlist/${userId}/add`, mediaToAdd)
     emit('mediaAdded')
 
     // Erfolgs-Feedback
@@ -169,7 +171,8 @@ const addToWatchlist = async (item: SimilarMediaItem) => {
 // NEU: Genre von TMDB über Backend abrufen
 const getGenreFromTmdb = async (tmdbId: number, type: string): Promise<string | null> => {
   try {
-    const response = await axios.get(`${baseUrl}/watchlist/tmdb/${tmdbId}/details?type=${type}`)
+    // KORRIGIERT: /api hinzugefügt
+    const response = await axios.get(`${baseUrl}/api/watchlist/tmdb/${tmdbId}/details?type=${type}`)
 
     if (response.data && response.data.genre) {
       return response.data.genre

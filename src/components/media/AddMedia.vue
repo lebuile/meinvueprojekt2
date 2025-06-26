@@ -117,7 +117,8 @@ const addMedia = async () => {
       ratingDate: watchedDate.value ? new Date(watchedDate.value).toISOString() : null
     }
 
-    await axios.post(`${baseUrl}/watchlist/${userId}/add`, mediaToAdd)
+    // KORREKTUR: /api Prefix hinzugefügt
+    await axios.post(`${baseUrl}/api/watchlist/${userId}/add`, mediaToAdd)
     emit('media-added')
 
     newMedia.value = {
