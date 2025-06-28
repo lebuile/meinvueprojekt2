@@ -24,6 +24,28 @@
 
       <button @click="resetFilters" class="reset-button">Filter zurücksetzen</button>
       <button @click="showAddModal = true" class="add-button">Neue Filme/Serien hinzufügen</button>
+
+      <!-- Search Bar rechts neben dem Add Button -->
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Nach Titel suchen..."
+            class="search-input"
+            @input="handleSearch"
+          >
+          <button
+            v-if="searchQuery"
+            @click="clearSearch"
+            class="clear-search-btn"
+            title="Suche löschen"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Genre-Tags in separater Zeile -->
@@ -40,8 +62,14 @@
       </div>
     </div>
 
+    <!-- Search Results Info -->
+    <div v-if="searchQuery" class="search-results-info">
+      <span class="search-term">Suche nach: "{{ searchQuery }}"</span>
+      <span class="results-count">{{ filteredMediaList.length }} Ergebnis(se) gefunden</span>
+    </div>
+
     <div class="stats-bar">
-      <span>Gesamt: {{ mediaList.length }}</span>
+      <span>Gesamt: {{ filteredMediaList.length }}</span>
       <span>🎬 Filme: {{ movieCount }}</span>
       <span>📺 Serien: {{ seriesCount }}</span>
       <span v-if="ratedCount > 0">Bewertet: {{ ratedCount }}</span>
@@ -58,13 +86,28 @@
       </div>
     </div>
 
-    <div v-if="mediaList.length === 0" class="empty-state">
-      <p>Keine Medien gefunden. Füge dein erstes Medium hinzu!</p>
+    <div v-if="filteredMediaList.length === 0" class="empty-state">
+      <div class="empty-icon">
+        {{ searchQuery ? '🔍' : '📝' }}
+      </div>
+      <p v-if="searchQuery">
+        Keine Ergebnisse für "{{ searchQuery }}" gefunden.
+      </p>
+      <p v-else>
+        Keine Medien gefunden. Füge dein erstes Medium hinzu!
+      </p>
+      <button
+        v-if="searchQuery"
+        @click="clearSearch"
+        class="clear-search-suggestion"
+      >
+        Suche zurücksetzen
+      </button>
     </div>
 
     <ul v-else class="media-list">
       <MediaItem
-        v-for="media in sortedMediaList"
+        v-for="media in sortedAndFilteredMediaList"
         :key="media.id"
         :media="media"
         @delete="deleteMedia"
@@ -82,6 +125,7 @@ import MediaItem from './MediaItem.vue'
 import AddMedia from './AddMedia.vue'
 import type { Media } from '../../types/media.ts'
 
+// Bestehende refs
 const selectedGenres = ref<string[]>([])
 const currentGenre = ref<string>('')
 const minRating = ref<string>('')
@@ -96,6 +140,10 @@ const isRatingFilter = ref(false)
 const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
 const mediaList = ref<Media[]>([])
 const showAddModal = ref(false)
+const latestRatingDate = ref<string | null>(null)
+
+// NEU: Search functionality
+const searchQuery = ref<string>('')
 
 const getUserId = () => {
   const userId = authService.getUserId()
@@ -105,6 +153,19 @@ const getUserId = () => {
   return userId
 }
 
+// NEU: Filtered media list based on search (nur Titel)
+const filteredMediaList = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return mediaList.value
+  }
+
+  const query = searchQuery.value.toLowerCase().trim()
+
+  return mediaList.value.filter(media => {
+    return media.title.toLowerCase().includes(query)
+  })
+})
+
 const hasActiveFilters = computed(() => {
   return selectedGenres.value.length > 0 ||
     isMovieFilter.value ||
@@ -112,23 +173,56 @@ const hasActiveFilters = computed(() => {
     isWatchedFilter.value ||
     isUnwatchedFilter.value ||
     minRating.value !== '' ||
-    isRatingFilter.value
+    isRatingFilter.value ||
+    searchQuery.value.trim() !== ''
 })
 
 const movieCount = computed(() => {
-  return mediaList.value.filter(media => media.type === 'MOVIE').length
+  return filteredMediaList.value.filter(media => media.type === 'MOVIE').length
 })
 
 const seriesCount = computed(() => {
-  return mediaList.value.filter(media => media.type === 'SERIES').length
+  return filteredMediaList.value.filter(media => media.type === 'SERIES').length
 })
 
-const latestRatingDate = ref<string | null>(null)
+const ratedCount = computed(() => {
+  return filteredMediaList.value.filter(media => media.rating && media.rating > 0).length
+})
+
+const averageRating = computed(() => {
+  const ratedMedias = filteredMediaList.value.filter(media => media.rating && media.rating > 0)
+  if (ratedMedias.length === 0) return 0
+  const sum = ratedMedias.reduce((acc, media) => acc + (media.rating || 0), 0)
+  return sum / ratedMedias.length
+})
+
+const sortedAndFilteredMediaList = computed(() => {
+  return [...filteredMediaList.value].sort((a, b) => {
+    if (a.rating && b.rating) {
+      if (a.rating !== b.rating) {
+        return b.rating - a.rating
+      }
+    } else if (a.rating && !b.rating) {
+      return -1
+    } else if (!a.rating && b.rating) {
+      return 1
+    }
+    return a.title.localeCompare(b.title)
+  })
+})
+
+// NEU: Search functions
+const handleSearch = () => {
+  // Reaktive Suche - filtert automatisch durch computed property
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+}
 
 const loadLatestRatingDate = async () => {
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/latest-rating-date`)
     latestRatingDate.value = response.data.latestRatingDate
   } catch (error) {
@@ -159,32 +253,7 @@ const formatDate = (dateString: string | null) => {
   }
 }
 
-const ratedCount = computed(() => {
-  return mediaList.value.filter(media => media.rating && media.rating > 0).length
-})
-
-const averageRating = computed(() => {
-  const ratedMedias = mediaList.value.filter(media => media.rating && media.rating > 0)
-  if (ratedMedias.length === 0) return 0
-  const sum = ratedMedias.reduce((acc, media) => acc + (media.rating || 0), 0)
-  return sum / ratedMedias.length
-})
-
-const sortedMediaList = computed(() => {
-  return [...mediaList.value].sort((a, b) => {
-    if (a.rating && b.rating) {
-      if (a.rating !== b.rating) {
-        return b.rating - a.rating
-      }
-    } else if (a.rating && !b.rating) {
-      return -1
-    } else if (!a.rating && b.rating) {
-      return 1
-    }
-    return a.title.localeCompare(b.title)
-  })
-})
-
+// Bestehende Filter-Funktionen
 const onGenreChange = () => {
   if (currentGenre.value && !selectedGenres.value.includes(currentGenre.value)) {
     selectedGenres.value.push(currentGenre.value)
@@ -213,7 +282,6 @@ const loadAll = async () => {
   resetFilterStates()
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/all`)
     mediaList.value = response.data
   } catch (error) {
@@ -226,7 +294,6 @@ const loadMovies = async () => {
   isSeriesFilter.value = false
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/movies`)
     mediaList.value = response.data
   } catch (error) {
@@ -239,7 +306,6 @@ const loadSeries = async () => {
   isMovieFilter.value = false
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/series`)
     mediaList.value = response.data
   } catch (error) {
@@ -252,7 +318,6 @@ const loadWatched = async () => {
   isWatchedFilter.value = true
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/watched`)
     mediaList.value = response.data
   } catch (error) {
@@ -265,7 +330,6 @@ const loadUnwatched = async () => {
   isUnwatchedFilter.value = true
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/unwatched`)
     mediaList.value = response.data
   } catch (error) {
@@ -278,7 +342,6 @@ const loadRated = async () => {
   isRatingFilter.value = true
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/rated`)
     mediaList.value = response.data
   } catch (error) {
@@ -291,7 +354,6 @@ const loadByMinRating = async (rating: number) => {
   isRatingFilter.value = true
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/rating-min/${rating}`)
     mediaList.value = response.data
   } catch (error) {
@@ -318,7 +380,6 @@ const loadByGenres = async () => {
     const params = new URLSearchParams()
     selectedGenres.value.forEach(g => params.append('genres', g))
 
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${userId}/genres?${params.toString()}`)
     let filteredData = response.data
 
@@ -343,7 +404,6 @@ const loadByGenres = async () => {
 const deleteMedia = async (id: number) => {
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     await axios.delete(`${baseUrl}/api/watchlist/${userId}/delete/${id}`)
     await refreshList()
   } catch (error) {
@@ -374,6 +434,7 @@ const resetFilters = async () => {
   selectedGenres.value = []
   currentGenre.value = ''
   minRating.value = ''
+  searchQuery.value = '' // NEU: Such-Query zurücksetzen
   resetFilterStates()
   await loadAll()
 }
@@ -396,7 +457,7 @@ onMounted(() => {
 .filter-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px; /* Kleinerer Abstand */
   margin-bottom: 20px;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -405,15 +466,16 @@ onMounted(() => {
 .filter-controls button,
 .genre-dropdown,
 .rating-dropdown {
-  padding: 6px 10px;
+  padding: 6px 8px; /* Kompakteres Padding */
   border: 1px solid #ccc;
   background-color: #f8f9fa;
   cursor: pointer;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px; /* Kleinere Schrift */
   height: 30px;
   white-space: nowrap;
   flex-shrink: 0;
+  min-width: auto; /* Erlaubt kleinere Breiten */
 }
 
 .filter-controls button:hover {
@@ -428,25 +490,172 @@ onMounted(() => {
 
 .genre-dropdown,
 .rating-dropdown {
-  min-width: auto;
   width: auto;
+  min-width: 60px; /* Minimale Breite */
   background-color: white;
   -webkit-appearance: none;
   appearance: none;
 }
 
 .genre-dropdown {
-  width: 65px;
+  width: 55px; /* Noch kompakter */
 }
 
 .rating-dropdown {
-  width: 100px;
+  width: 75px; /* Kompakter */
 }
 
 .genre-dropdown:focus,
 .rating-dropdown:focus {
   outline: 2px solid #007bff;
   outline-offset: 2px;
+}
+
+.reset-button {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+  padding: 6px 8px !important; /* Kompakter */
+  font-size: 10px !important; /* Kleinere Schrift */
+}
+
+.reset-button:hover {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
+}
+
+.add-button {
+  background-color: #28a745 !important;
+  color: white !important;
+  border-color: #28a745 !important;
+  padding: 6px 8px !important; /* Kompakter */
+  font-size: 10px !important; /* Kleinere Schrift */
+}
+
+.add-button:hover {
+  background-color: #218838 !important;
+  border-color: #1e7e34 !important;
+}
+
+/* NEU: Search Container neben Add Button */
+.search-container {
+  position: relative;
+  margin-left: 6px; /* Kleinerer Abstand */
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 140px; /* Noch kompakter */
+}
+
+.search-icon {
+  position: absolute;
+  left: 6px; /* Kleinerer Abstand */
+  font-size: 12px; /* Kleineres Icon */
+  color: #6c757d;
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 24px 6px 20px; /* Kompakteres Padding */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 11px; /* Kleinere Schrift */
+  background: white;
+  transition: all 0.2s ease;
+  height: 30px;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  border-color: #007bff;
+}
+
+.search-input::placeholder {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 4px; /* Kleinerer Abstand */
+  background: none;
+  border: none;
+  font-size: 10px; /* Kleineres X */
+  color: #6c757d;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  z-index: 1;
+  width: 14px; /* Kleinerer Button */
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-search-btn:hover {
+  background: #f8f9fa;
+  color: #dc3545;
+}
+
+.search-results-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #e8f4fd;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border-left: 4px solid #007bff;
+}
+
+.search-term {
+  font-weight: 500;
+  color: #0056b3;
+}
+
+.results-count {
+  font-size: 12px;
+  color: #6c757d;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.clear-search-suggestion {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 12px;
+  transition: all 0.2s ease;
+}
+
+.clear-search-suggestion:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
 }
 
 .selected-genres-row {
@@ -474,28 +683,6 @@ onMounted(() => {
   background-color: #0056b3;
 }
 
-.reset-button {
-  background-color: #dc3545 !important;
-  color: white !important;
-  border-color: #dc3545 !important;
-}
-
-.reset-button:hover {
-  background-color: #c82333 !important;
-  border-color: #bd2130 !important;
-}
-
-.add-button {
-  background-color: #28a745 !important;
-  color: white !important;
-  border-color: #28a745 !important;
-}
-
-.add-button:hover {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
-}
-
 .stats-bar {
   display: flex;
   gap: 20px;
@@ -505,6 +692,7 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 14px;
   color: #666;
+  flex-wrap: wrap;
 }
 
 .modal {
@@ -532,15 +720,6 @@ onMounted(() => {
   border: 1px solid #dee2e6;
 }
 
-.modal-content h3 {
-  color: #212529;
-  margin-bottom: 1.5rem;
-  font-size: 1.4rem;
-  text-align: center;
-  border-bottom: 2px solid #007bff;
-  padding-bottom: 0.5rem;
-}
-
 .close-btn {
   background: #6c757d;
   color: white;
@@ -560,12 +739,6 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #666;
-}
-
 .latest-rating {
   color: #28a745;
   font-weight: 500;
@@ -575,5 +748,44 @@ onMounted(() => {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-wrap: wrap;
+  }
+
+  .search-container {
+    order: 1;
+    width: 100%;
+    margin: 8px 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+  }
+
+  .search-input {
+    font-size: 16px; /* Verhindert Zoom auf iOS */
+  }
+
+  .add-button {
+    order: 2;
+    width: 100%;
+  }
+
+  .search-results-info {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+  }
+
+  .stats-bar {
+    gap: 10px;
+    font-size: 12px;
+  }
 }
 </style>
