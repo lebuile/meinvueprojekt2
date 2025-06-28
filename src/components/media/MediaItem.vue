@@ -17,7 +17,16 @@
           🎬 Trailer
         </button>
 
-        <!-- NEU: Similar-Button -->
+        <!-- NEU: Where to Watch Button -->
+        <button
+          @click="openWhereToWatch"
+          class="where-to-watch-btn"
+          title="Wo kann ich das schauen?"
+        >
+          📺 Wo schauen?
+        </button>
+
+        <!-- Similar-Button -->
         <button
           @click="openSimilarMedia"
           class="similar-btn"
@@ -65,7 +74,7 @@
       </button>
     </div>
 
-    <!-- NEU: Trailer Modal -->
+    <!-- Trailer Modal -->
     <TrailerModal
       :show="showTrailerModal"
       :media-title="media.title"
@@ -74,7 +83,15 @@
       @close="closeTrailerModal"
     />
 
-    <!-- NEU: Similar Media Modal -->
+    <!-- NEU: Where to Watch Modal -->
+    <WhereToWatchModal
+      :show="showWhereToWatchModal"
+      :media-id="media.id"
+      :media-title="media.title"
+      @close="closeWhereToWatchModal"
+    />
+
+    <!-- Similar Media Modal -->
     <SimilarMedia
       :show="showSimilarModal"
       :media-id="media.id"
@@ -141,6 +158,7 @@ import axios from 'axios'
 import { authService } from '../../authService'
 import StarRating from './StarRating.vue'
 import TrailerModal from './TrailerModal.vue'
+import WhereToWatchModal from './WhereToWatchModal.vue'
 import SimilarMedia from './SimilarMedia.vue'
 import type { Media } from '../../types/media.ts'
 
@@ -194,6 +212,9 @@ const currentTrailerUrl = ref<string | null>(null)
 
 const showSimilarModal = ref(false)
 
+// NEU: Where to Watch Modal State
+const showWhereToWatchModal = ref(false)
+
 const editForm = reactive({
   title: props.media.title,
   genre: props.media.genre,
@@ -211,7 +232,6 @@ watch(() => props.media, (newMedia) => {
 const updateRating = async (newRating: number | null) => {
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     await axios.patch(`${baseUrl}/api/watchlist/${userId}/update/${props.media.id}/rating`, {
       rating: newRating,
       comment: localComment.value
@@ -228,7 +248,6 @@ const updateComment = async () => {
 
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     await axios.patch(`${baseUrl}/api/watchlist/${userId}/update/${props.media.id}/rating`, {
       rating: localRating.value,
       comment: localComment.value
@@ -257,7 +276,6 @@ const toggleEdit = () => {
 const saveEdit = async () => {
   try {
     const userId = getUserId()
-    // KORRIGIERT: /api hinzugefügt
     await axios.put(`${baseUrl}/api/watchlist/${userId}/update/${props.media.id}`, editForm)
     isEditing.value = false
     emit('updated')
@@ -271,7 +289,6 @@ const openTrailer = async () => {
   showTrailerModal.value = true
 
   try {
-    // KORRIGIERT: /api hinzugefügt
     const response = await axios.get(`${baseUrl}/api/watchlist/${props.media.id}/trailer`)
     currentTrailerUrl.value = response.data.trailerUrl
   } catch (error) {
@@ -287,6 +304,15 @@ const closeTrailerModal = () => {
   currentTrailerUrl.value = null
 }
 
+// NEU: Where to Watch Funktionen
+const openWhereToWatch = () => {
+  showWhereToWatchModal.value = true
+}
+
+const closeWhereToWatchModal = () => {
+  showWhereToWatchModal.value = false
+}
+
 const openSimilarMedia = () => {
   showSimilarModal.value = true
 }
@@ -294,7 +320,6 @@ const openSimilarMedia = () => {
 const closeSimilarModal = () => {
   showSimilarModal.value = false
 }
-
 </script>
 
 <style scoped>
@@ -367,6 +392,29 @@ const closeSimilarModal = () => {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
+}
+
+/* NEU: Where to Watch Button Styling */
+.where-to-watch-btn {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.where-to-watch-btn:hover {
+  background: linear-gradient(135deg, #20c997, #28a745);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
 .similar-btn {
