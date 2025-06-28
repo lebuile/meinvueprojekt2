@@ -1,41 +1,41 @@
 <template>
   <div class="app">
-    <AuthComponent
-      v-if="!isLoggedIn"
-      @login-success="handleLoginSuccess"
-    />
+    <!-- Zeige Login/Register mit Dashboard-Design -->
+    <div v-if="!isLoggedIn" class="login-page">
+      <div class="hero-section">
+        <div class="logo-container">
+          <img src="/logo.png" alt="Logo" class="main-logo" />
+          <h1 class="app-title">Meine Watchlist</h1>
+        </div>
 
-    <div v-else>
-      <div v-if="!showWatchlist" class="landing-page">
-        <div class="hero-section">
-          <div class="logo-container">
-            <img src="/logo.png" alt="Logo" class="main-logo" />
-            <h1 class="app-title">Meine Watchlist</h1>
-            <p class="welcome-text">Willkommen, {{ currentUser?.username }}!</p>
+        <!-- Auth Component wird hier eingebettet -->
+        <div class="auth-container">
+          <AuthComponent @login-success="handleLoginSuccess" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Zeige Watchlist direkt nach Login -->
+    <div v-else class="watchlist-view">
+      <div class="header">
+        <div class="header-left">
+          <div class="logo-mini">
+            <img src="/logo.png" alt="Logo" class="mini-logo" />
+            <span class="app-name">Meine Watchlist</span>
           </div>
+        </div>
 
-          <button @click="openWatchlist" class="primary-btn">
-            🎬 Meine Watchlist öffnen
+        <h1 class="page-title">📺 Meine Watchlist</h1>
+
+        <div class="user-section">
+          <span class="username">{{ currentUser?.username }}</span>
+          <button @click="handleLogout" class="logout-btn">
+            Abmelden
           </button>
         </div>
       </div>
 
-      <div v-else class="watchlist-view">
-        <div class="header">
-          <button @click="goBack" class="back-btn">
-            ← Zurück
-          </button>
-          <h1 class="page-title">📺 Meine Watchlist</h1>
-          <div class="user-section">
-            <span class="username">{{ currentUser?.username }}</span>
-            <button @click="handleLogout" class="logout-btn">
-              Abmelden
-            </button>
-          </div>
-        </div>
-
-        <MediaWatchlist />
-      </div>
+      <MediaWatchlist />
     </div>
   </div>
 </template>
@@ -46,7 +46,6 @@ import { authService } from './authService'
 import AuthComponent from './components/authentication/AuthComponent.vue'
 import MediaWatchlist from './components/media/MediaWatchlist.vue'
 
-const showWatchlist = ref(false)
 const isLoggedIn = ref(false)
 
 const currentUser = computed(() => authService.getCurrentUser())
@@ -58,20 +57,12 @@ onMounted(() => {
 
 const handleLoginSuccess = () => {
   isLoggedIn.value = true
+  // Gehe direkt zur Watchlist (kein Dashboard)
 }
 
 const handleLogout = () => {
   authService.logout()
   isLoggedIn.value = false
-  showWatchlist.value = false
-}
-
-const openWatchlist = () => {
-  showWatchlist.value = true
-}
-
-const goBack = () => {
-  showWatchlist.value = false
 }
 </script>
 
@@ -112,7 +103,8 @@ html, body {
   overflow: hidden;
 }
 
-.landing-page {
+/* Login Page - Dashboard Design */
+.login-page {
   position: absolute;
   top: 0;
   left: 0;
@@ -129,74 +121,44 @@ html, body {
   text-align: center;
   max-width: 500px;
   background: rgba(255, 255, 255, 0.95);
-  padding: 4rem 3rem;
+  padding: 3rem 2.5rem;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(10px);
   margin: 2rem;
+  width: 100%;
 }
 
 .logo-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .main-logo {
-  width: 120px;
-  height: 120px;
+  width: 80px;
+  height: 80px;
   object-fit: contain;
   background: transparent;
   border-radius: 50%;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-  transition: transform 0.3s ease;
-}
-
-.main-logo:hover {
-  transform: scale(1.05);
 }
 
 .app-title {
-  font-size: 2.8rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #2d3748;
   margin: 0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.welcome-text {
-  font-size: 1.2rem;
-  color: #4a5568;
-  margin: 0;
-  font-weight: 500;
+.auth-container {
+  width: 100%;
 }
 
-.primary-btn {
-  background: linear-gradient(135deg, #4299e1, #3182ce);
-  color: white;
-  border: none;
-  padding: 1.2rem 3rem;
-  font-size: 1.2rem;
-  font-weight: 600;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
-  transform: translateY(0);
-}
-
-.primary-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(66, 153, 225, 0.4);
-  background: linear-gradient(135deg, #3182ce, #2c5aa0);
-}
-
-.primary-btn:active {
-  transform: translateY(-1px);
-}
-
+/* Watchlist View */
 .watchlist-view {
   position: absolute;
   top: 0;
@@ -220,20 +182,28 @@ html, body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.back-btn {
-  background: #4a5568;
-  color: #e2e8f0;
-  border: none;
-  padding: 0.7rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+.header-left {
+  display: flex;
+  align-items: center;
 }
 
-.back-btn:hover {
-  background: #718096;
-  transform: translateX(-2px);
+.logo-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mini-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.app-name {
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .page-title {
@@ -276,46 +246,48 @@ html, body {
 
 @media (max-width: 768px) {
   .hero-section {
-    padding: 3rem 2rem;
+    padding: 2.5rem 2rem;
     margin: 1rem;
     max-width: none;
   }
 
   .main-logo {
-    width: 90px;
-    height: 90px;
+    width: 60px;
+    height: 60px;
   }
 
   .app-title {
-    font-size: 2rem;
-  }
-
-  .welcome-text {
-    font-size: 1rem;
-  }
-
-  .primary-btn {
-    padding: 1rem 2rem;
-    font-size: 1rem;
+    font-size: 1.6rem;
   }
 
   .header {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+    padding: 1rem 0.5rem;
+  }
+
+  .header-left {
+    order: 1;
   }
 
   .page-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+    order: 2;
   }
 
   .user-section {
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.5rem;
+    order: 3;
+  }
+
+  .app-name {
+    display: none;
   }
 }
 
-.landing-page,
+.login-page,
 .watchlist-view {
   animation: fadeIn 0.5s ease-in-out;
 }
