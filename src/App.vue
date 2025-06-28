@@ -8,7 +8,6 @@
           <h1 class="app-title">Meine Watchlist</h1>
         </div>
 
-        <!-- Auth Component wird hier eingebettet -->
         <div class="auth-container">
           <AuthComponent @login-success="handleLoginSuccess" />
         </div>
@@ -21,11 +20,10 @@
         <div class="header-left">
           <div class="logo-mini">
             <img src="/logo.png" alt="Logo" class="mini-logo" />
-            <span class="app-name">Meine Watchlist</span>
           </div>
         </div>
 
-        <h1 class="page-title">📺 Meine Watchlist</h1>
+        <h1 class="page-title">Meine Watchlist</h1>
 
         <div class="user-section">
           <span class="username">{{ currentUser?.username }}</span>
@@ -194,8 +192,8 @@ html, body {
 }
 
 .mini-logo {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: contain;
 }

@@ -457,25 +457,31 @@ onMounted(() => {
 .filter-controls {
   display: flex;
   align-items: center;
-  gap: 6px; /* Kleinerer Abstand */
+  gap: 2px; /* Minimaler Abstand zwischen allen Elementen */
   margin-bottom: 20px;
   flex-wrap: nowrap;
   overflow-x: auto;
+  width: 100%;
+  padding: 0;
 }
 
 .filter-controls button,
 .genre-dropdown,
 .rating-dropdown {
-  padding: 6px 8px; /* Kompakteres Padding */
+  padding: 6px 3px;
   border: 1px solid #ccc;
   background-color: #f8f9fa;
   cursor: pointer;
   border-radius: 4px;
-  font-size: 11px; /* Kleinere Schrift */
+  font-size: 9px;
   height: 30px;
   white-space: nowrap;
-  flex-shrink: 0;
-  min-width: auto; /* Erlaubt kleinere Breiten */
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filter-controls button:hover {
@@ -490,19 +496,12 @@ onMounted(() => {
 
 .genre-dropdown,
 .rating-dropdown {
-  width: auto;
-  min-width: 60px; /* Minimale Breite */
   background-color: white;
   -webkit-appearance: none;
   appearance: none;
-}
-
-.genre-dropdown {
-  width: 55px; /* Noch kompakter */
-}
-
-.rating-dropdown {
-  width: 75px; /* Kompakter */
+  text-align: center;
+  text-align-last: center;
+  flex: 0.8;
 }
 
 .genre-dropdown:focus,
@@ -515,8 +514,7 @@ onMounted(() => {
   background-color: #dc3545 !important;
   color: white !important;
   border-color: #dc3545 !important;
-  padding: 6px 8px !important; /* Kompakter */
-  font-size: 10px !important; /* Kleinere Schrift */
+  flex: 1.2 !important;
 }
 
 .reset-button:hover {
@@ -528,8 +526,7 @@ onMounted(() => {
   background-color: #28a745 !important;
   color: white !important;
   border-color: #28a745 !important;
-  padding: 6px 8px !important; /* Kompakter */
-  font-size: 10px !important; /* Kleinere Schrift */
+  flex: 1.5 !important;
 }
 
 .add-button:hover {
@@ -537,33 +534,33 @@ onMounted(() => {
   border-color: #1e7e34 !important;
 }
 
-/* NEU: Search Container neben Add Button */
 .search-container {
   position: relative;
-  margin-left: 6px; /* Kleinerer Abstand */
+  margin-left: 2px;
+  flex: 1.3;
 }
 
 .search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
-  width: 140px; /* Noch kompakter */
+  width: 100%;
 }
 
 .search-icon {
   position: absolute;
-  left: 6px; /* Kleinerer Abstand */
-  font-size: 12px; /* Kleineres Icon */
+  left: 6px;
+  font-size: 12px;
   color: #6c757d;
   z-index: 1;
 }
 
 .search-input {
   width: 100%;
-  padding: 6px 24px 6px 20px; /* Kompakteres Padding */
+  padding: 6px 24px 6px 20px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 11px; /* Kleinere Schrift */
+  font-size: 9px;
   background: white;
   transition: all 0.2s ease;
   height: 30px;
@@ -579,21 +576,22 @@ onMounted(() => {
 .search-input::placeholder {
   color: #6c757d;
   font-style: italic;
+  font-size: 9px;
 }
 
 .clear-search-btn {
   position: absolute;
-  right: 4px; /* Kleinerer Abstand */
+  right: 4px;
   background: none;
   border: none;
-  font-size: 10px; /* Kleineres X */
+  font-size: 10px;
   color: #6c757d;
   cursor: pointer;
   padding: 2px;
   border-radius: 50%;
   transition: all 0.2s ease;
   z-index: 1;
-  width: 14px; /* Kleinerer Button */
+  width: 14px;
   height: 14px;
   display: flex;
   align-items: center;
@@ -753,15 +751,16 @@ onMounted(() => {
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .filter-controls {
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Nur auf Mobile wrappen */
+    gap: 2px;
   }
 
   .search-container {
     order: 1;
     width: 100%;
-    margin: 8px 0;
+    margin: 4px 0;
     margin-left: 0;
-    margin-right: 0;
+    flex: none;
   }
 
   .search-input-wrapper {
@@ -769,12 +768,13 @@ onMounted(() => {
   }
 
   .search-input {
-    font-size: 16px; /* Verhindert Zoom auf iOS */
+    font-size: 16px;
   }
 
   .add-button {
     order: 2;
     width: 100%;
+    flex: none;
   }
 
   .search-results-info {
