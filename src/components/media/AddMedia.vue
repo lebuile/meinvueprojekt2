@@ -83,7 +83,8 @@ import type { Media } from '../../types/media.ts'
 const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
 const emit = defineEmits(['media-added'])
 
-const genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
+const genres = ['Action', 'Animation', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
+
 
 const watchedDate = ref('')
 

@@ -151,7 +151,7 @@ const props = defineProps<{
 const emit = defineEmits(['delete', 'updated'])
 
 const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
-const genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
+const genres = ['Action', 'Animation', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
 
 const getUserId = () => {
   const userId = authService.getUserId()

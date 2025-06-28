@@ -85,7 +85,7 @@ import type { Media } from '../../types/media.ts'
 const selectedGenres = ref<string[]>([])
 const currentGenre = ref<string>('')
 const minRating = ref<string>('')
-const genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
+const genres = ['Action', 'Animation', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi']
 
 const isMovieFilter = ref(false)
 const isSeriesFilter = ref(false)
