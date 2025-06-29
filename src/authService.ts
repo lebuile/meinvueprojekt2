@@ -16,7 +16,7 @@ export interface RegisterCredentials {
 }
 
 class AuthService {
-  private baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
+  private baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL || 'http://localhost:8080'
   private currentUser: User | null = null
 
   constructor() {
